@@ -1,1 +1,1 @@
-# MALScriptFInder
+# MALScriptFinder
