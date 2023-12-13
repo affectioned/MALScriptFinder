@@ -91,7 +91,8 @@ public class MaliciousScriptFinder : EditorWindow
     private const string MenuItemPath = "Tools/Find Malicious Scripts";
 
     [MenuItem(MenuItemPath)]
-    public static void ShowWindow(){
+    public static void ShowWindow()
+    {
         GetWindow<MaliciousScriptFinder>();
     }
 
@@ -178,7 +179,19 @@ public class MaliciousScriptFinder : EditorWindow
             if (IsExcludedFile(file))
                 continue;
 
-            string content = File.ReadAllText(file);
+            string content = "";
+
+            // Read text content if the file is a .cs file
+            if (file.EndsWith(".cs"))
+            {
+                content = File.ReadAllText(file);
+            }
+            // Log an error if the file is a .dll file
+            else if (file.EndsWith(".dll"))
+            {
+                Debug.LogError($"Error: Binary file detected and skipped during analysis: {file}");
+                continue;
+            }
 
             int severity3Count = 0;
 
@@ -225,8 +238,8 @@ public class MaliciousScriptFinder : EditorWindow
     {
         SearchOption searchOption = includeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-        return Directory.GetFiles(folder, "*.cs", searchOption)
-                        .Where(file => !IsExcludedFile(file));
+        return Directory.GetFiles(folder, "*.*", searchOption)
+                        .Where(file => !IsExcludedFile(file) && (file.EndsWith(".cs") || file.EndsWith(".dll")));
     }
 
     private bool IsExcludedFile(string file)
