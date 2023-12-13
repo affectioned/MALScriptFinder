@@ -4,9 +4,6 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System;
 
 public class MaliciousScriptFinder : EditorWindow
 {
@@ -86,20 +83,24 @@ public class MaliciousScriptFinder : EditorWindow
             {"setInterval", 1},
     };
 
-    private string folderToHash = "Assets";
+    private bool runScanOnImport = true;
 
     private const string MenuItemPath = "Tools/Find Malicious Scripts";
+
+    private static HashGenerator hashGenerator;
 
     [MenuItem(MenuItemPath)]
     public static void ShowWindow()
     {
+        hashGenerator = new("Assets");
         GetWindow<MaliciousScriptFinder>();
     }
 
     public void OnGUI()
     {
         DrawMaliciousScriptFinderUI();
-        DrawFileHashGeneratorUI();
+        DrawAutoScanToggle();
+        hashGenerator.DrawFileHashGeneratorUI();
     }
 
     private void DrawMaliciousScriptFinderUI()
@@ -122,45 +123,11 @@ public class MaliciousScriptFinder : EditorWindow
         }
     }
 
-    private void DrawFileHashGeneratorUI()
+    private void DrawAutoScanToggle()
     {
-        GUILayout.Label("File Hash Generator", EditorStyles.boldLabel);
-
-        folderToHash = EditorGUILayout.TextField("Folder to Hash", folderToHash);
-
-        if (GUILayout.Button("Generate Hash"))
-        {
-            GenerateHashForFolder(folderToHash);
-        }
+        GUILayout.Label("Auto Scan On Import", EditorStyles.boldLabel);
+        runScanOnImport = EditorGUILayout.Toggle("Run Scan On Asset Import", runScanOnImport);
     }
-
-    private void GenerateHashForFolder(string folderPath)
-    {
-        if (!Directory.Exists(folderPath))
-        {
-            Debug.LogError($"Error: The specified folder '{folderPath}' does not exist.");
-            return;
-        }
-
-        StringBuilder hashStringBuilder = new StringBuilder();
-
-        foreach (string filePath in Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories))
-        {
-            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                using (MD5 md5 = MD5.Create())
-                {
-                    byte[] hashBytes = md5.ComputeHash(stream);
-                    string hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-                    hashStringBuilder.AppendLine($"{filePath}: {hashString}");
-                }
-            }
-        }
-
-        string result = hashStringBuilder.ToString();
-        Debug.Log("Folder Hash (MD5):\n" + result);
-    }
-
 
     private void ScanProject()
     {
